@@ -1,0 +1,6 @@
+[workspace]
+
+members = [
+    "ni-syscfg-sys",
+    "ni-syscfg"
+]

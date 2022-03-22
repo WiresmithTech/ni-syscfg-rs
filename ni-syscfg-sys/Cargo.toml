@@ -1,0 +1,15 @@
+[package]
+name = "ni-syscfg-sys"
+build = "build.rs"
+links = "nisyscfg"
+version = "20.5.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+[dev-dependencies]
+
+
+[target.x86_64-pc-windows-msvc]
