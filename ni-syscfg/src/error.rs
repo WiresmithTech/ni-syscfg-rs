@@ -5,6 +5,10 @@ use thiserror::Error;
 pub enum NiSystemConfigurationError {
     #[error("API Error")]
     ApiError(NiSysCfgApiStatus),
+    #[error("String Conversion Error From The API")]
+    IntoStringError(#[from] std::ffi::IntoStringError),
+    #[error("Null in String from API")]
+    NulStringError(#[from] std::ffi::NulError),
 }
 
 #[derive(Clone, Copy, Debug)]
