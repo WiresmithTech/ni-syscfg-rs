@@ -175,3 +175,20 @@ pub enum BusType {
 }
 
 impl ValueEnum for BusType {}
+
+#[repr(i32)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ApiBool {
+    False = NISysCfgBool_NISysCfgBoolFalse,
+    True = NISysCfgBool_NISysCfgBoolTrue,
+}
+
+impl From<bool> for ApiBool {
+    fn from(input: bool) -> Self {
+        if input {
+            Self::True
+        } else {
+            Self::False
+        }
+    }
+}

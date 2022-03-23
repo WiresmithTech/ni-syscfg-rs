@@ -1,33 +1,80 @@
 use ni_syscfg_sys::*;
 use std::ffi::CString;
+use std::time::Duration;
 
 use crate::error::{api_status, Result};
 use crate::handles::close_handle;
+use crate::parameters::ApiBool;
 use crate::resources::ResourceList;
+
+#[repr(i32)]
+#[derive(Clone, Copy, Debug)]
+pub enum Locale {
+    Default = NISysCfgLocale_NISysCfgLocaleDefault,
+    ChineseSimplified = NISysCfgLocale_NISysCfgLocaleChineseSimplified,
+    English = NISysCfgLocale_NISysCfgLocaleEnglish,
+    French = NISysCfgLocale_NISysCfgLocaleFrench,
+    German = NISysCfgLocale_NISysCfgLocaleGerman,
+    Japanese = NISysCfgLocale_NISysCfgLocaleJapanese,
+    Korean = NISysCfgLocale_NISysCfgLocaleKorean,
+}
+
+pub struct SessionConfig<'a> {
+    target: &'a str,
+    username: Option<CString>,
+    password: Option<CString>,
+    locale: Locale,
+    force_refresh: bool,
+    timeout: Duration,
+}
+
+impl<'a> SessionConfig<'a> {
+    pub fn new() -> Self {
+        Self {
+            target: "",
+            username: None,
+            password: None,
+            locale: Locale::Default,
+            force_refresh: false,
+            timeout: Duration::from_secs(1),
+        }
+    }
+
+    pub fn locale(&mut self, locale: Locale) {
+        self.locale = locale
+    }
+
+    pub fn force_refresh(&mut self, force_refresh: bool) {
+        self.force_refresh = force_refresh;
+    }
+
+    pub fn connect(&self) -> Result<Session> {
+        let mut handle: NISysCfgSessionHandle = std::ptr::null_mut();
+
+        unsafe {
+            api_status(NISysCfgInitializeSession(
+                CString::new(self.target)?.as_ptr(),
+                std::ptr::null(),
+                std::ptr::null(),
+                self.locale as NISysCfgLocale,
+                ApiBool::from(self.force_refresh) as NISysCfgBool,
+                self.timeout.as_millis() as u32,
+                std::ptr::null_mut(),
+                &mut handle,
+            ))?;
+        }
+
+        Ok(Session::new_from_handle(handle))
+    }
+}
 
 pub struct Session {
     handle: NISysCfgSessionHandle,
 }
 
 impl Session {
-    pub fn new_local_session() -> Result<Self> {
-        let mut handle: NISysCfgSessionHandle = std::ptr::null_mut();
-        let localhost = CString::new("localhost").unwrap();
-
-        unsafe {
-            api_status(NISysCfgInitializeSession(
-                localhost.as_ptr(),
-                std::ptr::null(),
-                std::ptr::null(),
-                NISysCfgLocale_NISysCfgLocaleDefault,
-                NISysCfgBool_NISysCfgBoolFalse,
-                1000,
-                std::ptr::null_mut(),
-                &mut handle,
-            ))?;
-        }
-
-        Ok(Self { handle })
+    pub fn new_from_handle(handle: NISysCfgSessionHandle) -> Self {
+        Self { handle }
     }
 
     pub fn handle(&self) -> &NISysCfgSessionHandle {
@@ -61,6 +108,6 @@ impl Drop for Session {
 mod tests {
     #[test]
     fn it_works() {
-        super::Session::new_local_session().unwrap();
+        super::SessionConfig::new().connect().unwrap();
     }
 }

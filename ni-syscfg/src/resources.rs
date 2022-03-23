@@ -1,4 +1,3 @@
-use std::ffi::{c_void, CString};
 use std::marker::PhantomData;
 
 use crate::error::{api_status, NiSysCfgApiStatus, Result};
