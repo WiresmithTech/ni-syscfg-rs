@@ -1,4 +1,4 @@
-use crate::error::{api_status, Result};
+use crate::error::{api_status, NiSystemConfigurationError, Result};
 /// Put a parameter interface type for all supported types here.
 /// this can be thought of as a middleware. Handling type conversions but only loosly wrapping the ffi.
 ///
@@ -9,6 +9,8 @@ use crate::error::{api_status, Result};
 /// also combine strings into here.
 ///
 use ni_syscfg_sys::*;
+use num_derive::FromPrimitive;
+use num_traits::FromPrimitive;
 use std::ffi::{c_void, CString};
 
 pub fn new_simple_string() -> CString {
@@ -101,3 +103,75 @@ impl ReadableParameter for String {
         Ok(value.into_string()?)
     }
 }
+
+/// Marker trait for enums to be used as property values.
+trait ValueEnum: FromPrimitive {}
+
+impl<T> ReadableParameter for T
+where
+    T: ValueEnum,
+{
+    fn read_resource_parameter(
+        handle: NISysCfgResourceHandle,
+        id: NISysCfgResourceProperty,
+    ) -> Result<T> {
+        let mut value = 0i32;
+        let status = unsafe {
+            api_status(NISysCfgGetResourceProperty(
+                handle,
+                id,
+                &mut value as *mut _ as *mut c_void,
+            ))?
+        };
+        if let Some(inner) = T::from_i32(value) {
+            Ok(inner)
+        } else {
+            Err(NiSystemConfigurationError::UnexpectedEnumValue(value))
+        }
+    }
+
+    fn read_resource_indexed_parameter(
+        handle: NISysCfgResourceHandle,
+        id: NISysCfgIndexedProperty,
+        index: u32,
+    ) -> Result<T> {
+        let mut value = 0i32;
+        let status = unsafe {
+            api_status(NISysCfgGetResourceIndexedProperty(
+                handle,
+                id,
+                index,
+                &mut value as *mut _ as *mut c_void,
+            ))?
+        };
+        if let Some(inner) = T::from_i32(value) {
+            Ok(inner)
+        } else {
+            Err(NiSystemConfigurationError::UnexpectedEnumValue(value))
+        }
+    }
+}
+
+#[repr(i32)]
+#[derive(FromPrimitive, Copy, Clone, Debug)]
+pub enum BusType {
+    BuiltIn = NISysCfgBusType_NISysCfgBusTypeBuiltIn,
+    PciPxi = NISysCfgBusType_NISysCfgBusTypePciPxi,
+    Usb = NISysCfgBusType_NISysCfgBusTypeUsb,
+    Gpib = NISysCfgBusType_NISysCfgBusTypeGpib,
+    Vxi = NISysCfgBusType_NISysCfgBusTypeVxi,
+    Serial = NISysCfgBusType_NISysCfgBusTypeSerial,
+    TcpIp = NISysCfgBusType_NISysCfgBusTypeTcpIp,
+    CompactRio = NISysCfgBusType_NISysCfgBusTypeCompactRio,
+    Scxi = NISysCfgBusType_NISysCfgBusTypeScxi,
+    CompactDaq = NISysCfgBusType_NISysCfgBusTypeCompactDaq,
+    SwitchBlock = NISysCfgBusType_NISysCfgBusTypeSwitchBlock,
+    Scc = NISysCfgBusType_NISysCfgBusTypeScc,
+    FireWire = NISysCfgBusType_NISysCfgBusTypeFireWire,
+    Accessory = NISysCfgBusType_NISysCfgBusTypeAccessory,
+    Can = NISysCfgBusType_NISysCfgBusTypeCan,
+    SwitchBlockDevice = NISysCfgBusType_NISysCfgBusTypeSwitchBlockDevice,
+    Slsc = 16,
+}
+
+impl ValueEnum for BusType {}

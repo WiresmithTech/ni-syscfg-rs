@@ -6,6 +6,9 @@ fn test_list_hardware() {
 
     for hardware in session.find_hardware().expect("Couldn't List Hardware") {
         let name = hardware.get_name().expect("Couldn't Get hardware Name");
-        println!("Hardware found {name}");
+        let bus_type = hardware
+            .connects_to_bus_type()
+            .expect("Couldnt get bus type");
+        println!("Hardware found {name} connected to {bus_type:?}");
     }
 }

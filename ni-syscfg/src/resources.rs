@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 
 use crate::error::{api_status, NiSysCfgApiStatus, Result};
 use crate::handles::close_handle;
-use crate::parameters::ReadableParameter;
+use crate::parameters::{BusType, ReadableParameter};
 use crate::session::Session;
 use ni_syscfg_sys::*;
 
@@ -72,6 +72,14 @@ impl Resource {
         parameter: ResourceParameter<T>,
     ) -> Result<T> {
         T::read_resource_parameter(self.handle, parameter.id)
+    }
+
+    //Specific parameters follow.
+    pub fn connects_to_bus_type(&self) -> Result<BusType> {
+        BusType::read_resource_parameter(
+            self.handle,
+            NISysCfgResourceProperty_NISysCfgResourcePropertyConnectsToBusType,
+        )
     }
 }
 
