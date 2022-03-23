@@ -1,9 +1,10 @@
 use std::ffi::{c_void, CString};
+use std::marker::PhantomData;
 
 use crate::error::{api_status, NiSysCfgApiStatus, Result};
 use crate::handles::close_handle;
+use crate::parameters::ReadableParameter;
 use crate::session::Session;
-use crate::strings::new_simple_string;
 use ni_syscfg_sys::*;
 
 pub struct ResourceList<'a> {
@@ -49,26 +50,28 @@ pub struct Resource {
     handle: NISysCfgResourceHandle,
 }
 
+pub struct ResourceParameter<T: ReadableParameter> {
+    id: i32,
+    phantom: PhantomData<T>,
+}
 impl Resource {
     pub fn from_handle(handle: NISysCfgResourceHandle) -> Self {
         Self { handle }
     }
 
     pub fn get_name(&self) -> Result<String> {
-        let mut name = new_simple_string();
-        let name_ptr = name.into_raw();
-        unsafe {
-            api_status(NISysCfgGetResourceIndexedProperty(
-                self.handle,
-                NISysCfgIndexedProperty_NISysCfgIndexedPropertyExpertUserAlias,
-                0,
-                name_ptr as *mut c_void,
-            ))?;
+        String::read_resource_indexed_parameter(
+            self.handle,
+            NISysCfgIndexedProperty_NISysCfgIndexedPropertyExpertUserAlias,
+            0,
+        )
+    }
 
-            name = CString::from_raw(name_ptr);
-        }
-
-        Ok(name.into_string()?)
+    pub fn get_parameter<T: ReadableParameter>(
+        &self,
+        parameter: ResourceParameter<T>,
+    ) -> Result<T> {
+        T::read_resource_parameter(self.handle, parameter.id)
     }
 }
 
