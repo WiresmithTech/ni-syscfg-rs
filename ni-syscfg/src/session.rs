@@ -1,11 +1,12 @@
 use ni_syscfg_sys::*;
-use std::ffi::CString;
+use std::ffi::{c_void, CString};
 use std::time::Duration;
 
 use crate::error::{api_status, Result};
 use crate::handles::close_handle;
+use crate::hardware_filter::{FilterMode, HardwareFilter};
 use crate::parameters::ApiBool;
-use crate::resources::ResourceList;
+use crate::resources::HardwareResourceList;
 
 #[repr(i32)]
 #[derive(Clone, Copy, Debug)]
@@ -102,33 +103,76 @@ impl<'a> SessionConfig<'a> {
     }
 }
 
+/// Provides an interface to an active system configuration session.
+///
+/// This is created when you connect to a target using [SessionConfig]
+/// and allows you to access hardware and software resources through the API.
 pub struct Session {
     handle: NISysCfgSessionHandle,
 }
 
 impl Session {
-    pub fn new_from_handle(handle: NISysCfgSessionHandle) -> Self {
+    fn new_from_handle(handle: NISysCfgSessionHandle) -> Self {
         Self { handle }
     }
 
-    pub fn handle(&self) -> &NISysCfgSessionHandle {
+    pub(crate) fn handle(&self) -> &NISysCfgSessionHandle {
         &self.handle
     }
 
-    pub fn find_hardware(&self) -> Result<ResourceList> {
+    /// Create a new filter for the session to use as part of [find_hardware]
+    pub fn create_filter(&self) -> Result<HardwareFilter> {
+        HardwareFilter::new(&self)
+    }
+
+    /// Find the hardware resources in the system, optionally with the filter settings.
+    ///
+    /// # Example Without Filtering
+    /// ```
+    /// use ni_syscfg::SessionConfig;
+    ///
+    /// let session = SessionConfig::new().connect().unwrap();
+    ///
+    /// for hardware in session.find_hardware(None).unwrap() {
+    ///   println!("Found {}", hardware.name().unwrap())
+    /// }
+    /// ```
+    ///
+    /// # Example With Filtering
+    /// ```
+    /// use ni_syscfg::{SessionConfig, FilterMode};
+    ///
+    /// let session = SessionConfig::new().connect().unwrap();
+    /// let mut filter = session.create_filter().unwrap();
+    /// filter.mode = FilterMode::MatchValuesAny;
+    ///
+    /// for hardware in session.find_hardware(Some(filter)).unwrap() {
+    ///   println!("Found {}", hardware.name().unwrap())
+    /// }
+    /// ```
+    pub fn find_hardware(&self, filtering: Option<HardwareFilter>) -> Result<HardwareResourceList> {
         let mut list_handle: NISysCfgEnumResourceHandle = std::ptr::null_mut();
+
+        let (filter_mode, filter_handle) = if let Some(filter) = filtering {
+            (filter.mode(), filter.handle())
+        } else {
+            (
+                FilterMode::MatchValuesAll,
+                std::ptr::null_mut() as NISysCfgFilterHandle,
+            )
+        };
 
         unsafe {
             api_status(NISysCfgFindHardware(
                 self.handle,
-                1,
-                std::ptr::null_mut(),
+                filter_mode as i32,
+                filter_handle,
                 std::ptr::null(),
                 &mut list_handle,
             ))?;
         }
 
-        Ok(ResourceList::from_handle(list_handle, self))
+        Ok(HardwareResourceList::from_handle(list_handle, self))
     }
 }
 

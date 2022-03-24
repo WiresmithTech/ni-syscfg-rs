@@ -6,26 +6,26 @@ use crate::parameters::{BusType, ReadableParameter};
 use crate::session::Session;
 use ni_syscfg_sys::*;
 
-pub struct ResourceList<'a> {
+pub struct HardwareResourceList<'a> {
     handle: NISysCfgEnumResourceHandle,
     session: &'a Session,
 }
 
-impl<'a> Drop for ResourceList<'a> {
+impl<'a> Drop for HardwareResourceList<'a> {
     fn drop(&mut self) {
         //ignore result in drop.
         let _ = close_handle(self.handle);
     }
 }
 
-impl<'a> ResourceList<'a> {
+impl<'a> HardwareResourceList<'a> {
     pub fn from_handle(handle: NISysCfgEnumResourceHandle, session: &'a Session) -> Self {
         Self { handle, session }
     }
 }
 
-impl<'a> Iterator for ResourceList<'a> {
-    type Item = Resource;
+impl<'a> Iterator for HardwareResourceList<'a> {
+    type Item = HardwareResource;
 
     fn next(&mut self) -> Option<Self::Item> {
         unsafe {
@@ -38,14 +38,14 @@ impl<'a> Iterator for ResourceList<'a> {
 
             match result {
                 Ok(NiSysCfgApiStatus::EndOfEnum) => None,
-                Ok(_) => Some(Resource::from_handle(resource_handle)),
+                Ok(_) => Some(HardwareResource::from_handle(resource_handle)),
                 Err(_) => None,
             }
         }
     }
 }
 
-pub struct Resource {
+pub struct HardwareResource {
     handle: NISysCfgResourceHandle,
 }
 
@@ -53,12 +53,12 @@ pub struct ResourceParameter<T: ReadableParameter> {
     id: i32,
     phantom: PhantomData<T>,
 }
-impl Resource {
+impl HardwareResource {
     pub fn from_handle(handle: NISysCfgResourceHandle) -> Self {
         Self { handle }
     }
 
-    pub fn get_name(&self) -> Result<String> {
+    pub fn name(&self) -> Result<String> {
         String::read_resource_indexed_parameter(
             self.handle,
             NISysCfgIndexedProperty_NISysCfgIndexedPropertyExpertUserAlias,
@@ -82,7 +82,7 @@ impl Resource {
     }
 }
 
-impl Drop for Resource {
+impl Drop for HardwareResource {
     fn drop(&mut self) {
         //ignore result in drop.
         let _ = close_handle(self.handle);
