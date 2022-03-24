@@ -40,22 +40,56 @@ impl<'a> SessionConfig<'a> {
         }
     }
 
-    pub fn locale(&mut self, locale: Locale) {
-        self.locale = locale
+    pub fn target(mut self, target: &'a str) -> Self {
+        self.target = target;
+        self
     }
 
-    pub fn force_refresh(&mut self, force_refresh: bool) {
+    pub fn username(mut self, username: &str) -> Result<Self> {
+        self.username = Some(CString::new(username)?);
+        Ok(self)
+    }
+
+    pub fn password(mut self, password: &str) -> Result<Self> {
+        self.password = Some(CString::new(password)?);
+        Ok(self)
+    }
+
+    pub fn locale(mut self, locale: Locale) -> Self {
+        self.locale = locale;
+        self
+    }
+
+    pub fn force_refresh(mut self, force_refresh: bool) -> Self {
         self.force_refresh = force_refresh;
+        self
+    }
+
+    pub fn timeout(mut self, timeout: Duration) -> Self {
+        self.timeout = timeout;
+        self
     }
 
     pub fn connect(&self) -> Result<Session> {
+        fn optional_cstring_to_ptr(input: &Option<CString>) -> *const i8 {
+            if let Some(inner) = input {
+                inner.as_ptr()
+            } else {
+                std::ptr::null()
+            }
+        }
+
         let mut handle: NISysCfgSessionHandle = std::ptr::null_mut();
+
+        let username = optional_cstring_to_ptr(&self.username);
+
+        let password = optional_cstring_to_ptr(&self.password);
 
         unsafe {
             api_status(NISysCfgInitializeSession(
                 CString::new(self.target)?.as_ptr(),
-                std::ptr::null(),
-                std::ptr::null(),
+                username,
+                password,
                 self.locale as NISysCfgLocale,
                 ApiBool::from(self.force_refresh) as NISysCfgBool,
                 self.timeout.as_millis() as u32,
