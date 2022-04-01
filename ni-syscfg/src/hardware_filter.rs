@@ -25,7 +25,7 @@ impl HardwareFilter {
     }
 
     /// Set the mode for the filter, determining how the filter match is applied.
-    pub fn set_mode(mut self, mode: FilterMode) -> Self {
+    pub fn set_mode(&mut self, mode: FilterMode) -> &mut Self {
         self.mode = mode;
         self
     }
@@ -42,6 +42,7 @@ impl HardwareFilter {
 impl Drop for HardwareFilter {
     fn drop(&mut self) {
         let _ = close_handle(self.handle);
+        println!("Drop Filter");
     }
 }
 

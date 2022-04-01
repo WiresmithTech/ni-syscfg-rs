@@ -1,8 +1,9 @@
 use ni_syscfg_sys::*;
-use std::ffi::{c_void, CString};
+use std::ffi::CString;
 use std::time::Duration;
 
 use crate::error::{api_status, Result};
+use crate::experts::ExpertType;
 use crate::handles::close_handle;
 use crate::hardware_filter::{FilterMode, HardwareFilter};
 use crate::parameters::ApiBool;
@@ -133,7 +134,7 @@ impl Session {
     ///
     /// let session = SessionConfig::new().connect().unwrap();
     ///
-    /// for hardware in session.find_hardware(None).unwrap() {
+    /// for hardware in session.find_hardware(None, None).unwrap() {
     ///   println!("Found {}", hardware.name().unwrap())
     /// }
     /// ```
@@ -144,13 +145,28 @@ impl Session {
     ///
     /// let session = SessionConfig::new().connect().unwrap();
     /// let mut filter = session.create_filter().unwrap();
-    /// filter.mode = FilterMode::MatchValuesAny;
+    /// filter.set_mode(FilterMode::MatchValuesAny);
     ///
-    /// for hardware in session.find_hardware(Some(filter)).unwrap() {
+    /// for hardware in session.find_hardware(Some(&filter), None).unwrap() {
     ///   println!("Found {}", hardware.name().unwrap())
     /// }
     /// ```
-    pub fn find_hardware(&self, filtering: Option<HardwareFilter>) -> Result<HardwareResourceList> {
+    ///
+    /// # Example With DAQmx Expert Filter
+    /// ```
+    /// use ni_syscfg::{SessionConfig, ExpertType};
+    ///
+    /// let session = SessionConfig::new().connect().unwrap();
+    ///
+    /// for hardware in session.find_hardware(None, Some(&[ExpertType::NiDaqmx])).unwrap() {
+    ///   println!("Found {}", hardware.name().unwrap())
+    /// }
+    /// ```
+    pub fn find_hardware(
+        &self,
+        filtering: Option<&HardwareFilter>,
+        experts: Option<&[ExpertType]>,
+    ) -> Result<HardwareResourceList> {
         let mut list_handle: NISysCfgEnumResourceHandle = std::ptr::null_mut();
 
         let (filter_mode, filter_handle) = if let Some(filter) = filtering {
@@ -162,18 +178,34 @@ impl Session {
             )
         };
 
+        let expert_list = if let Some(list) = experts {
+            expert_list_to_text(list)?
+        } else {
+            CString::new("")?
+        };
+
         unsafe {
             api_status(NISysCfgFindHardware(
                 self.handle,
                 filter_mode as i32,
                 filter_handle,
-                std::ptr::null(),
+                expert_list.as_ptr(),
                 &mut list_handle,
             ))?;
         }
 
         Ok(HardwareResourceList::from_handle(list_handle, self))
     }
+}
+
+/// Convert the expert list to a format expect by the API.
+fn expert_list_to_text(list: &[ExpertType]) -> Result<CString> {
+    let list_string = list
+        .iter()
+        .map(|ex| ex.to_programmatic_string())
+        .collect::<Vec<String>>()
+        .join(",");
+    Ok(CString::new(list_string)?)
 }
 
 impl Drop for Session {
@@ -184,8 +216,39 @@ impl Drop for Session {
 
 #[cfg(test)]
 mod tests {
+
+    use super::*;
+
     #[test]
-    fn it_works() {
-        super::SessionConfig::new().connect().unwrap();
+    fn expert_list_to_string() {
+        //use a list of unknown so we know what it will produce.
+        let list = vec![
+            ExpertType::Unknown("test1".to_string()),
+            ExpertType::Unknown("test2".to_string()),
+        ];
+
+        let result = expert_list_to_text(&list).unwrap();
+
+        assert_eq!(result.to_str().unwrap(), "test1,test2");
+    }
+
+    #[test]
+    fn expert_list_to_string_single() {
+        //use a list of unknown so we know what it will produce.
+        let list = vec![ExpertType::Unknown("test1".to_string())];
+
+        let result = expert_list_to_text(&list).unwrap();
+
+        assert_eq!(result.to_str().unwrap(), "test1");
+    }
+
+    #[test]
+    fn expert_list_to_string_empty() {
+        //use a list of unknown so we know what it will produce.
+        let list = vec![];
+
+        let result = expert_list_to_text(&list).unwrap();
+
+        assert_eq!(result.to_str().unwrap(), "");
     }
 }
