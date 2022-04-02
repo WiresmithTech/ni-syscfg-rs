@@ -6,6 +6,9 @@ use crate::parameters::{BusType, ReadableParameter};
 use crate::session::Session;
 use ni_syscfg_sys::*;
 
+/// The hardware resource list is an iterator provided by [crate::Session::find_hardware].
+///
+/// Iterate through it to access [HardwareResource].
 pub struct HardwareResourceList<'a> {
     handle: NISysCfgEnumResourceHandle,
     session: &'a Session,

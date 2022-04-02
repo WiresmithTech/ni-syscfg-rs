@@ -128,6 +128,9 @@ impl Session {
 
     /// Find the hardware resources in the system, optionally with the filter settings.
     ///
+    /// * [`filtering`] can provide a hardware filter or [None] for no filtering.
+    /// * [`experts`] can be a slice of [`ExpertType`] to limit results to specific types or [None] for all supported experts.
+    ///
     /// # Example Without Filtering
     /// ```
     /// use ni_syscfg::SessionConfig;
