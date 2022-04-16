@@ -3,7 +3,7 @@
 
 /// `ExpertType` wraps the reference names for different experts in the system API.
 ///
-/// Those defined in [https://www.ni.com/en-gb/support/documentation/supplemental/18/valid-experts-for-the-system-configuration-api-functions.html](Valid Experts for the System Configuration API Functions) are already included here.
+/// Those defined in <https://www.ni.com/en-gb/support/documentation/supplemental/18/valid-experts-for-the-system-configuration-api-functions.html>(Valid Experts for the System Configuration API Functions) are already included here.
 ///
 /// [`Unknown`] provides a get out for those not translated already or that are added in the future.
 #[derive(Clone, PartialEq, Eq, Debug)]

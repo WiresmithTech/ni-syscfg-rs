@@ -7,5 +7,5 @@ mod resources;
 mod session;
 
 pub use experts::ExpertType;
-pub use hardware_filter::FilterMode;
+pub use hardware_filter::{FilterMode, HardwareFilter};
 pub use session::*;

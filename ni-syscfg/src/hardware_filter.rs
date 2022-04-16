@@ -6,7 +6,7 @@ use crate::Session;
 use ni_syscfg_sys::*;
 use std::ptr::null_mut;
 
-/// Used with [crate::Session::find_hardware] to specify which pieces of hardware are of interest.
+/// Used with [Session::find_hardware](crate::Session::find_hardware) to specify which pieces of hardware are of interest.
 pub struct HardwareFilter {
     handle: NISysCfgFilterHandle,
     mode: FilterMode,
