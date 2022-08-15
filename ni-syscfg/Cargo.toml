@@ -2,11 +2,17 @@
 name = "ni-syscfg"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+description = "Rust API for the NI System Configuration API"
+keywords = ["ni"]
+readme = "../README.md"
+repository = "https://github.com/WiresmithTech/ni-syscfg-rs"
+homepage = "https://github.com/WiresmithTech/ni-syscfg-rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ni-syscfg-sys = { path = "../ni-syscfg-sys" }
+ni-syscfg-sys = { path = "../ni-syscfg-sys", version="20.5" }
 thiserror = "1"
 num-derive = "0.3"
 num-traits = "0.2"
