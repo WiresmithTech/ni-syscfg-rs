@@ -5,7 +5,7 @@ mod hardware_filter;
 mod parameters;
 mod resources;
 mod session;
-mod software;
+pub mod software;
 pub(crate) mod types;
 
 pub use experts::ExpertType;

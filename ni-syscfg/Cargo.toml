@@ -20,3 +20,7 @@ num-traits = "0.2"
 [[bin]]
 name = "ni-syscfg"
 path = "bin/ni-syscfg.rs"
+
+[[bin]]
+name = "imaging-smoke-test"
+path = "bin/imaging-smoke-test.rs"
