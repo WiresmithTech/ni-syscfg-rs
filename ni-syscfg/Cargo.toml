@@ -16,6 +16,7 @@ ni-syscfg-sys = { path = "../ni-syscfg-sys", version="20.5" }
 thiserror = "1"
 num-derive = "0.3"
 num-traits = "0.2"
+paste = "1.0"
 
 [[bin]]
 name = "ni-syscfg"
