@@ -1,4 +1,4 @@
-mod error;
+pub mod error;
 mod experts;
 mod handles;
 mod hardware_filter;
