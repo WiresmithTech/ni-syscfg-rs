@@ -130,7 +130,7 @@ impl ReadableParameter for String {
 }
 
 /// Marker trait for enums to be used as property values.
-trait ValueEnum: FromPrimitive {}
+pub(crate) trait ValueEnum: FromPrimitive {}
 
 impl<T> ReadableParameter for T
 where

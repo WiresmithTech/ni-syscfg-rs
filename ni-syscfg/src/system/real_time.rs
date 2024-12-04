@@ -20,6 +20,4 @@ impl RealTimeSession {
     pub fn status(&self) -> Result<String> {
         String::read_system_parameter(self.handle, NISysCfgSystemProperty_NISysCfgSystemPropertySystemState)
     }
-
-
 }

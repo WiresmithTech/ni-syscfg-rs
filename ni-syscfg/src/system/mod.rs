@@ -1,8 +1,9 @@
 //! Implements system parameters on the session.
 
 mod real_time;
+mod network;
 
-use ni_syscfg_sys::{NISysCfgSystemProperty, NISysCfgSystemProperty_NISysCfgSystemPropertyHostname, NISysCfgSystemProperty_NISysCfgSystemPropertyIsLocked, NISysCfgSystemProperty_NISysCfgSystemPropertyIsLockingSupported, NISysCfgSystemProperty_NISysCfgSystemPropertyProductName, NISysCfgSystemProperty_NISysCfgSystemPropertySerialNumber};
+use ni_syscfg_sys::{NISysCfgSystemProperty, NISysCfgSystemProperty_NISysCfgSystemPropertyHostname, NISysCfgSystemProperty_NISysCfgSystemPropertyIsLocked, NISysCfgSystemProperty_NISysCfgSystemPropertyIsLockingSupported, NISysCfgSystemProperty_NISysCfgSystemPropertyProductId, NISysCfgSystemProperty_NISysCfgSystemPropertyProductName, NISysCfgSystemProperty_NISysCfgSystemPropertySerialNumber};
 use crate::Session;
 use crate::parameters::{ApiBool, ReadableParameter};
 use crate::error::Result;
@@ -28,6 +29,10 @@ impl Session {
 
     pub fn product_name(&self) -> Result<String> {
         String::read_system_parameter(self.handle(), NISysCfgSystemProperty_NISysCfgSystemPropertyProductName)
+    }
+
+    pub fn product_code(&self) -> Result<i32> {
+        i32::read_system_parameter(self.handle(), NISysCfgSystemProperty_NISysCfgSystemPropertyProductId)
     }
 
 
