@@ -117,8 +117,8 @@ impl Session {
         Self { handle }
     }
 
-    pub(crate) fn handle(&self) -> &NISysCfgSessionHandle {
-        &self.handle
+    pub(crate) fn handle(&self) -> NISysCfgSessionHandle {
+        self.handle
     }
 
     /// Create a new filter for the session to use as part of [find_hardware]

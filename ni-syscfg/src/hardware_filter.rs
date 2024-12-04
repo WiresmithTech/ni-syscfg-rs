@@ -16,7 +16,7 @@ impl HardwareFilter {
     pub fn new(session: &Session) -> Result<Self> {
         let mut handle = null_mut();
         unsafe {
-            api_status(NISysCfgCreateFilter(*session.handle(), &mut handle))?;
+            api_status(NISysCfgCreateFilter(session.handle(), &mut handle))?;
         }
         Ok(Self {
             handle,

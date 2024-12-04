@@ -30,6 +30,10 @@ pub trait ReadableParameter: Sized {
         id: NISysCfgIndexedProperty,
         index: u32,
     ) -> Result<Self>;
+    fn read_system_parameter(
+        handle: NISysCfgSessionHandle,
+        id: NISysCfgSystemProperty
+    ) -> Result<Self>;
 }
 
 impl ReadableParameter for i32 {
@@ -61,6 +65,17 @@ impl ReadableParameter for i32 {
                 index,
                 &mut value as *mut _ as *mut c_void,
             ))?
+        };
+        Ok(value)
+    }
+
+    fn read_system_parameter(
+        handle: NISysCfgSessionHandle,
+        id: NISysCfgSystemProperty
+    ) -> Result<i32> {
+        let mut value = 0i32;
+        let status = unsafe {
+            api_status(NISysCfgGetSystemProperty(handle, id, &mut value as *mut _ as *mut c_void))?
         };
         Ok(value)
     }
@@ -98,6 +113,16 @@ impl ReadableParameter for String {
                 index,
                 value_ptr as *mut c_void,
             ))?;
+            value = CString::from_raw(value_ptr);
+        };
+        Ok(value.into_string()?)
+    }
+
+    fn read_system_parameter(handle: NISysCfgSessionHandle, id: NISysCfgSystemProperty) -> Result<Self> {
+        let mut value = new_simple_string();
+        let value_ptr = value.into_raw();
+        let status = unsafe {
+            api_status(NISysCfgGetSystemProperty(handle, id, value_ptr as *mut c_void))?;
             value = CString::from_raw(value_ptr);
         };
         Ok(value.into_string()?)
@@ -150,6 +175,22 @@ where
             Err(NiSystemConfigurationError::UnexpectedEnumValue(value))
         }
     }
+    fn read_system_parameter(handle: NISysCfgSessionHandle, id: NISysCfgSystemProperty) -> Result<Self> {
+        let mut value = 0i32;
+        let status = unsafe {
+            api_status(NISysCfgGetSystemProperty(
+                handle,
+                id,
+                &mut value as *mut _ as *mut c_void,
+            ))
+        };
+        if let Some(inner) = T::from_i32(value) {
+            Ok(inner)
+        } else {
+            Err(NiSystemConfigurationError::UnexpectedEnumValue(value))
+        }
+
+    }
 }
 
 #[repr(i32)]
@@ -183,12 +224,52 @@ pub enum ApiBool {
     True = NISysCfgBool_NISysCfgBoolTrue,
 }
 
+impl FromPrimitive for ApiBool {
+    fn from_i32(n: i32) -> Option<Self> {
+        if n == 0 {
+            Some(Self::False)
+        }
+        else {
+            Some(Self::True)
+        }
+    }
+
+    fn from_i64(n: i64) -> Option<Self> {
+       if n == 0 {
+           Some(Self::False)
+       }
+        else {
+            Some(Self::True)
+        }
+    }
+
+    fn from_u64(n: u64) -> Option<Self> {
+        if n == 0 {
+            Some(Self::False)
+        }
+        else {
+            Some(Self::True)
+        }
+    }
+}
+
+impl ValueEnum for ApiBool {}
+
 impl From<bool> for ApiBool {
     fn from(input: bool) -> Self {
         if input {
             Self::True
         } else {
             Self::False
+        }
+    }
+}
+
+impl From<ApiBool> for bool {
+    fn from(input: ApiBool) -> Self {
+        match input {
+            ApiBool::False => false,
+            ApiBool::True => true,
         }
     }
 }

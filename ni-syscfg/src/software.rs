@@ -91,7 +91,7 @@ impl Session {
 
         unsafe {
             api_status(NISysCfgCreateSystemImageAsFolder(
-                *handle,
+                handle,
                 title.as_ptr(),
                 id.as_ptr(),
                 version.as_ptr(),
@@ -145,7 +145,7 @@ impl Session {
 
         unsafe {
             api_status(NISysCfgSetSystemImageFromFolder2(
-                *handle,
+                handle,
                 FfiBoolean::from(auto_restart) as i32,
                 path.as_ptr(),
                 password_ptr,

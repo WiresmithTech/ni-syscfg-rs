@@ -34,7 +34,7 @@ impl<'a> Iterator for HardwareResourceList<'a> {
         unsafe {
             let mut resource_handle = std::ptr::null_mut();
             let result = api_status(NISysCfgNextResource(
-                *self.session.handle(),
+                self.session.handle(),
                 self.handle,
                 &mut resource_handle,
             ));
